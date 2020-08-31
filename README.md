@@ -16,6 +16,7 @@
    * my.cnf - Default MySQL configuration file which will be copied to the server and modify there
    * mysqld_service.j2 - Ansibl template to setup MySQL service if select "source" option
    * install-packages.sh - Install necessary packages at the local machine to be able to execute all necessary scripts.
+   * install-mysql.sh - shell script to install Percona MySQL server
    * test-service.py - python script to get MySQL server version
    * verification.sh - test to verify installed service
 
@@ -25,9 +26,19 @@
    ./install-packages.sh
    ```
    
-   * Execute ansible playbook to create Security group and EC2 instance
+   * Execute ansible playbook to create Security group and EC2 instance - this will generate "hosts" file inside folder with IP of server
    ```
    ansible-playbook create-instance.yml
    ```   
-
-   this will generate "hosts" file inside folder with IP of server  
+   
+   * Check that all parameters correct in vars/config.cfg
+  
+   * Run shell script - wait when it wil lbe finished. If selected "source" and verions 5.6 and 5.7 - can take rather lot of time 
+   ```
+   ./install-mysql.sh
+   ```
+   
+   * Execute test script - Look at the messages.
+   ```
+   ./verification.sh
+   ```

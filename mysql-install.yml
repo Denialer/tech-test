@@ -1,0 +1,164 @@
+---
+- hosts: all
+  become: yes
+  vars:
+    mysql_version: "{{ version }}"
+    source_directory: "/tmp/mysql-source"
+    mysql_home: "/usr/local/mysql"
+  tasks:
+  
+  - name: Ensure EPEL is enabled
+    yum: 
+      name: epel-release 
+      state: present 
+    tags: [source,repo]
+
+  - name: Create MySQL Group
+    group:
+      name: mysql
+      state: present
+    tags: source
+  
+  - name: Create MySQL User
+    user:
+      name: mysql
+      group: mysql
+    tags: source
+
+  - name: Install MySQL Percona repo
+    yum:
+      name: https://repo.percona.com/yum/percona-release-latest.noarch.rpm
+      state: present
+    tags: repo
+  - name: Install MySQL Percona Server version {{version}}
+    yum:
+      name: Percona-Server-server-{{ version }}.x86_64
+      state: present
+    tags: repo
+
+  - name: Install necessary application to compile from source code
+    yum:
+      name: [ git,scons,gcc,gcc-c++,openssl,cmake,bison,boost-devel,asio-devel,libaio-devel,ncurses-devel,readline-devel,pam-devel,socat,libcurl-devel,MySQL-python ]
+      state: latest
+    tags: source
+
+  - name: Git clone Percona MySQL version to server
+    git:
+      repo: https://github.com/percona/percona-server.git
+      dest: "{{source_directory}}"
+      version: "{{ version }}"
+      force: yes
+    tags: source
+
+  - name: Activate submodules
+    shell: git submodule init && git submodule update
+    args:
+      chdir: "{{source_directory}}"
+    tags: source
+
+  - name: Prepare for compilation
+    shell: /bin/cmake . -DCMAKE_BUILD_TYPE=RelWithDebInfo -DBUILD_CONFIG=mysql_release -DFEATURE_SET=community -DWITH_EMBEDDED_SERVER=OFF -DENABLE_DTRACE=no
+    args:
+      chdir: "{{source_directory}}"
+    tags: source
+
+  - name: Build Percona Server MySQL
+    make:
+    args:
+      chdir: "{{source_directory}}"
+    tags: source
+
+  - name: Install Percona Server MySQL
+    make:
+    args:
+      target: install
+      chdir: "{{source_directory}}"
+    tags: source
+
+  - name: Copy necessary files to setup mysqld service
+    copy: src={{ item.src }} dest={{ item.dest }} mode={{ item.mode }} remote_src={{ item.remote}}
+    with_items:
+      - { src: '{{source_directory}}/build-ps/rpm/mysql-systemd', dest: '{{mysql_home}}/bin/mysql-systemd', mode: '0755', remote: 'yes'}
+      - { src: 'my.cnf', dest: '/etc/my.cnf', mode: '0755', remote: 'no'}
+    tags: source
+
+  - name: Add to PATH MySQL installation dir
+    copy:
+      dest: /etc/profile.d/custom-path.sh
+      content:  "PATH=$PATH:{{ mysql_home }}/bin"
+    tags: source
+
+  - name: Add export PATH to the mysql ping script
+    lineinfile:
+      path: "{{ mysql_home }}/bin/mysql-systemd"
+      line: "export PATH=$PATH:{{ mysql_home }}/bin"
+      insertafter: '^#!'
+      firstmatch: yes 
+      state: present
+      backup: yes
+    tags: source
+ 
+  - name: create Datadir
+    file:
+      path: /var/lib/mysql
+      owner: mysql
+      group: mysql
+      state: directory
+      mode: '0755'
+    tags: source
+
+  - name: initial DB
+    shell: /usr/local/mysql/scripts/mysql_install_db --user=mysql --ldata=/var/lib/mysql
+    args:
+      chdir: "{{ mysql_home }}"
+    tags: source
+
+  - name: Create service file from template
+    template:
+      src: mysqld_service.j2
+      dest: /etc/systemd/system/mysqld.service
+      mode: 0644
+    tags: source
+
+  - name: Reload systemcntr
+    systemd:
+      daemon_reload: yes
+    tags: source
+
+  - name: Change PID file location
+    lineinfile:
+      path: /etc/my.cnf
+      regexp: '^pid-file'
+      line: 'pid-file=/tmp/mysql.pid'
+    tags: [source, repo]
+
+  - name: Change PID file location
+    lineinfile:
+      path: /etc/my.cnf
+      regexp: '^log-error'
+      line: 'log-error=/tmp/mysql-error.log'
+    tags: [source, repo]
+  
+  - name: Enable MySQL sevice
+    systemd:
+      name: mysqld
+      state: restarted
+      enabled: yes
+    tags: [source, repo]
+
+  - name: Create file my.cnf for client
+    copy:
+      dest: "/root/.my.cnf"
+      content: |
+        [client]
+        socket=/var/lib/mysql/mysql.sock
+    tags: [source, repo]
+
+  - name: Create mysql user for TESTS
+    mysql_user:
+      name: testuser
+      password: 12345
+      host: '%'
+      priv: '*.*:ALL,GRANT'
+      state: present
+    tags: [source, repo]

@@ -12,7 +12,7 @@ try:
   cur.execute("SELECT VERSION()")
 
   data = cur.fetchone()
-  print "Database version : %s " % data
+  print "%s" % data
 
 except mdb.Error, e:
 

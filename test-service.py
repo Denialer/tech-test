@@ -12,7 +12,8 @@ try:
   cur.execute("SELECT VERSION()")
 
   data = cur.fetchone()
-  print "%s" % data
+  short_version = str(data)[2:5]
+  print "%s" % short_version
 
 except mdb.Error, e:
 

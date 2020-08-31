@@ -4,10 +4,12 @@ import MySQLdb as mdb
 import sys
 
 con = None
+hosts_file=open("hosts","r")
+ip=str(hosts_file.read())
 
 try:
 
-  con = mdb.connect('34.241.29.152', 'testuser','12345', 'mysql');
+  con = mdb.connect(ip, 'testuser','12345', 'mysql');
   cur = con.cursor()
   cur.execute("SELECT VERSION()")
 

@@ -37,7 +37,7 @@
         image: ami-0d4002a13019b7703
         wait: yes
         instance_type: t2.micro
-        vpc_subnet_id: subnet-dcac9cba
+        vpc_subnet_id: "{{ subnet_id }}"
         group_id: "{{ sec_group.group_id }}"
         count_tag:
           type: DB

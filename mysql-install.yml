@@ -38,9 +38,15 @@
 
   - name: Install necessary application to compile from source code
     yum:
-      name: [ git,scons,gcc,gcc-c++,openssl,cmake,bison,boost-devel,asio-devel,libaio-devel,ncurses-devel,readline-devel,pam-devel,socat,libcurl-devel,MySQL-python ]
+      name: [ git,scons,gcc,gcc-c++,openssl,cmake,bison,boost-devel,asio-devel,libaio-devel,ncurses-devel,readline-devel,pam-devel,socat,libcurl-devel ]
       state: latest
     tags: source
+
+  - name: Install MySQL-python - need for repo and source
+    yum:
+      name: MySQL-python
+      state: latest
+    tags: [source, repo]
 
   - name: Git clone Percona MySQL version to server
     git:

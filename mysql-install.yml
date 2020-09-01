@@ -140,6 +140,15 @@
     args:
       chdir: "{{ mysql_home }}"
     tags: source
+    when: (mysql_version == "5.6") or (mysql_version == "5.5")
+
+  - name: initial DB
+    shell: /usr/local/mysql/bin/mysqld --defaults-file=/etc/my.cnf --initialize-insecure --user=mysql
+    args:
+      chdir: "{{ mysql_home }}"
+    tags: source
+    when: mysql_version == "5.7"
+
 
   - name: Create service file from template
     template:

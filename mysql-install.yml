@@ -49,9 +49,9 @@
 
   - name: Install MySQL-python - need for repo and source
     yum:
-      name: MySQL-python
+      name: [ MySQL-python, perl, perl-Data-Dumper ]
       state: latest
-    tags: [source, repo]
+    tags: [ source, repo ]
 
   - name: Git clone Percona MySQL version to server
     git:
@@ -91,6 +91,7 @@
     with_items:
       - { src: '{{source_directory}}/build-ps/rpm/mysql-systemd', dest: '{{mysql_home}}/bin/mysql-systemd', mode: '0755', remote: 'yes'}
     tags: source
+    when: (mysql_version == "5.6") or (mysql_version == "5.5")
 
   - name: Copy config file for MySQL
     copy: src={{ item.src }} dest={{ item.dest }} mode={{ item.mode }} remote_src={{ item.remote}}
@@ -102,8 +103,8 @@
     file:
       path: /var/lib/mysql
       state: absent
-    tags: repo
-    when: mysql_version == "57"
+    tags: [ repo, source ]
+    when: (mysql_version == "57") or (mysql_version == "5.7")
 
   - name: Initial DAta dir with insecure option (only for 5.7 - 5.6 and 5.6 by default aleeady have it)
     shell: mysqld --defaults-file=/etc/my.cnf --initialize-insecure --user=mysql
@@ -125,6 +126,7 @@
       state: present
       backup: yes
     tags: source
+    when: (mysql_version == "5.6") or (mysql_version == "5.5")
  
   - name: create Datadir
     file:
@@ -156,6 +158,15 @@
       dest: /etc/systemd/system/mysqld.service
       mode: 0644
     tags: source
+    when: (mysql_version == "5.6") or (mysql_version == "5.5")
+
+  - name: Create service file from template
+    template:
+      src: mysqld_service_57.j2
+      dest: /etc/systemd/system/mysqld.service
+      mode: 0644
+    tags: source
+    when: mysql_version == "5.7"
 
   - name: Reload systemcntr
     systemd:

@@ -1,0 +1,27 @@
+#
+# Systemd service file for Percona Server
+#
+# # This service file is to start PS just with mysqld_safe
+#
+
+[Unit]
+Description=MySQL Percona Server
+After=network.target
+After=syslog.target
+
+[Install]
+WantedBy=multi-user.target
+Alias=mysql.service
+
+[Service]
+Enviroment=PATH=/sbin:/bin:/usr/sbin:/usr/bin:{{mysql_home}}/bin/
+
+# Start main service
+ExecStart={{mysql_home}}/bin/mysqld_safe
+
+# Give up if ping don't get an answer
+TimeoutSec=600
+
+Restart=always
+PrivateTmp=false
+

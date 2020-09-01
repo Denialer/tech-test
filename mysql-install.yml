@@ -103,10 +103,12 @@
       path: /var/lib/mysql
       state: absent
     tags: repo
+    when: mysql_version == "57"
 
   - name: Initial DAta dir with insecure option (only for 5.7 - 5.6 and 5.6 by default aleeady have it)
     shell: mysqld --defaults-file=/etc/my.cnf --initialize-insecure --user=mysql
     tags: repo
+    when: mysql_version == "57"
 
   - name: Add to PATH MySQL installation dir
     copy:

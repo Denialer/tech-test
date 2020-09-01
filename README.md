@@ -12,7 +12,7 @@
    * create-instance.yml - ansible playbook to create instance
    * mysql-install.yml - ansible playbook to install Percona mysql service
    * vars/config.cfg -  configuration file. There are you need to setup version from supported list, path to secret key
-   * secrets/aws_cred.yml - keys for AWS account
+   * secrets/aws_cred.yml - keys for AWS account and subnet ID. Subnet should be from eu-west-1. If you want to change that too - please, chnge region in the file **create-instance.yml**
    * my.cnf - Default MySQL configuration file which will be copied to the server and modify there
    * mysqld_service.j2 - Ansibl template to setup MySQL service if select "source" option
    * install-packages.sh - Install necessary packages at the local machine to be able to execute all necessary scripts.

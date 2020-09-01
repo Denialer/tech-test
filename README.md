@@ -3,9 +3,10 @@
 1. Requrements.
    * ansible
    * python with mysql and boot3 modules
-   * Supported MysQL version (tested) - 5.5, 5.6, 5.7 - latest versions. (revisions not supported)
+   * Supported MysQL version (tested) - 5.5, 5.6 - latest versions. (revisions not supported). 5.7 - need minimum 8 GB RAM for source.
    * OS - RedHat or Cent OS 7.X
    * Python 2.7   
+   * ** AWS KEY SHOULD NOT BE PASSWORD PROTECTED **
 
 2. Folder structure
    
@@ -30,7 +31,8 @@
    ```
    ansible-playbook create-instance.yml
    ```   
-   
+   ** Please, wait while instance will be up and running **
+
    * Check that all parameters correct in vars/config.cfg
   
    * Run shell script - wait when it wil lbe finished. If selected "source" and verions 5.6 and 5.7 - can take rather lot of time 

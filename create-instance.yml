@@ -4,7 +4,7 @@
   tasks:
     - name: Load AWS credentials
       include_vars:
-        file: secret/aws_cred.yml
+        file: /data/ansible/playbooks/secret/aws_cred.yml
     - name: Create security group
       ec2_group:
         name: mysqldb_sec_group

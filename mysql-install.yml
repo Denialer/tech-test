@@ -13,6 +13,11 @@
       state: present 
     tags: [source,repo]
 
+  - name: Disable SELinux - too much issues with that.
+    selinux:
+      state: disabled
+    tags: [source,repo]
+
   - name: Create MySQL Group
     group:
       name: mysql
@@ -63,7 +68,7 @@
     tags: source
 
   - name: Prepare for compilation
-    shell: /bin/cmake . -DCMAKE_BUILD_TYPE=RelWithDebInfo -DBUILD_CONFIG=mysql_release -DFEATURE_SET=community -DWITH_EMBEDDED_SERVER=OFF -DENABLE_DTRACE=no
+    shell: /bin/cmake . -DCMAKE_BUILD_TYPE=RelWithDebInfo -DBUILD_CONFIG=mysql_release -DFEATURE_SET=community -DWITH_EMBEDDED_SERVER=OFF -DENABLE_DTRACE=no  -DDOWNLOAD_BOOST=1 -DWITH_BOOST=.
     args:
       chdir: "{{source_directory}}"
     tags: source
@@ -85,8 +90,23 @@
     copy: src={{ item.src }} dest={{ item.dest }} mode={{ item.mode }} remote_src={{ item.remote}}
     with_items:
       - { src: '{{source_directory}}/build-ps/rpm/mysql-systemd', dest: '{{mysql_home}}/bin/mysql-systemd', mode: '0755', remote: 'yes'}
-      - { src: 'my.cnf', dest: '/etc/my.cnf', mode: '0755', remote: 'no'}
     tags: source
+
+  - name: Copy config file for MySQL
+    copy: src={{ item.src }} dest={{ item.dest }} mode={{ item.mode }} remote_src={{ item.remote}}
+    with_items:
+      - { src: 'my.cnf', dest: '/etc/my.cnf', mode: '0755', remote: 'no'}
+    tags: [source, repo]
+
+  - name: Remove datadir
+    file:
+      path: /var/lib/mysql
+      state: absent
+    tags: repo
+
+  - name: Initial DAta dir with insecure option (only for 5.7 - 5.6 and 5.6 by default aleeady have it)
+    shell: mysqld --defaults-file=/etc/my.cnf --initialize-insecure --user=mysql
+    tags: repo
 
   - name: Add to PATH MySQL installation dir
     copy:
